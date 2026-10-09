@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, Star, Truck, ShieldCheck,
   Sparkles, RotateCcw, Instagram, Facebook, Youtube, Minus, Plus, ChevronLeft, ChevronRight,
@@ -53,8 +53,8 @@ const products: Product[] = [
 const slides = [
   { vid: vMain, tag: "New Arrival", title: "Your glow-up smells like kiwi.", sub: "Meet Kiwi Crush — zesty, green and impossibly fresh.", bg: "bg-kiwi" },
   { vid: vProd1, tag: "Summer Sale · 30% off", title: "Juicy, sweet & a little extra.", sub: "Watermelon Berry is back for the season.", bg: "bg-melon" },
-  { vid: vProd2, tag: "Bestseller", title: "Peach, please. Always.", sub: "Our most-loved fruity floral, now in minis.", bg: "bg-peach-gradient" },
-  { vid: vProd3, tag: "Must Have", title: "Gourmand dreams.", sub: "Sweet vanilla and caramel for a cozy vibe.", bg: "bg-cream" },
+  { vid: vProd3, tag: "Bestseller", title: "Peach, please. Always.", sub: "Our most-loved fruity floral, now in minis.", bg: "bg-peach-gradient" },
+  { vid: vProd2, tag: "Must Have", title: "Gourmand dreams.", sub: "Sweet vanilla and caramel for a cozy vibe.", bg: "bg-cream" },
   { vid: vProd4, tag: "Exclusive", title: "Fresh Citrus Pop.", sub: "The perfect pick-me-up for any day.", bg: "bg-pastel" },
 ];
 
@@ -78,6 +78,36 @@ function Badge({ kind }: { kind: NonNullable<Product["badge"]> }) {
   return <span className={`pill px-3 py-1 text-xs font-semibold ${map[kind]}`}>{label}</span>;
 }
 
+function ScrollReveal({ children, index }: { children: React.ReactNode, index: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.1 });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const isLeft = index % 2 === 0;
+  const translate = isLeft ? '-translate-x-12 -translate-y-12' : 'translate-x-12 -translate-y-12';
+  const delay = (index % 2) * 200;
+  
+  return (
+    <div 
+      ref={ref} 
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] h-full ${isVisible ? 'opacity-100 translate-x-0 translate-y-0' : `opacity-0 ${translate}`}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 function Index() {
   const [cart, setCart] = useState<Record<number, number>>({});
   const [wish, setWish] = useState<number[]>([]);
@@ -86,6 +116,24 @@ function Index() {
   const [slide, setSlide] = useState(0);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [activeScent, setActiveScent] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const cards = Array.from(document.querySelectorAll('.scent-card'));
+      let currentIndex = 0;
+      cards.forEach((card, index) => {
+        const rect = card.getBoundingClientRect();
+        if (rect.top < 300) {
+          currentIndex = index;
+        }
+      });
+      setActiveScent(currentIndex);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setSlide((s) => (s + 1) % slides.length), 5500);
@@ -179,32 +227,40 @@ function Index() {
         </div>
       )}
 
-      {/* 1. Hero carousel */}
-      <section className={`${s.bg} relative transition-colors duration-700`}>
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 md:grid-cols-2 md:px-8 md:py-20">
-          <div key={slide} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <span className="pill bg-card/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest">{s.tag}</span>
-            <h1 className="mt-6 text-5xl font-medium leading-[1.05] md:text-7xl">{s.title}</h1>
-            <p className="mt-5 max-w-md text-lg text-foreground/75">{s.sub}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#shop" className="pill bg-foreground px-8 py-3.5 font-medium text-background transition hover:scale-105">Shop Now</a>
-              <a href="#lines" className="pill bg-card px-8 py-3.5 font-medium transition hover:scale-105">Discover More</a>
-            </div>
-          </div>
-          <div className="relative">
-            <video key={s.vid + slide} src={s.vid} autoPlay muted loop playsInline className="aspect-[4/3] w-full rounded-[2.5rem] object-cover shadow-2xl animate-in fade-in zoom-in-95 duration-700" />
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <button aria-label="Previous" onClick={() => setSlide((slide + slides.length - 1) % slides.length)} className="pill bg-card p-2"><ChevronLeft className="h-4 w-4" /></button>
-              <button aria-label="Next" onClick={() => setSlide((slide + 1) % slides.length)} className="pill bg-card p-2"><ChevronRight className="h-4 w-4" /></button>
+      {/* 1. Hero (Full Width Video Banner) */}
+      <section className="relative h-[85vh] min-h-[600px] w-full overflow-hidden bg-black flex flex-col justify-end">
+        {/* Video Background */}
+        <video key={s.vid + slide} src={s.vid} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-cover animate-in fade-in duration-1000" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+        
+        {/* Content */}
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 md:px-8 pb-24 pt-32 text-white">
+          <div key={slide} className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <span className="pill mb-6 inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white border border-white/30">{s.tag}</span>
+            <h1 className="text-5xl font-medium leading-[1.05] md:text-7xl lg:text-8xl">{s.title}</h1>
+            <p className="mt-6 text-lg md:text-xl text-white/90 font-light">{s.sub}</p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <a href="#shop" className="pill bg-white px-10 py-4 font-semibold text-black transition hover:scale-105 shadow-xl">Shop Now</a>
+              <a href="#lines" className="pill bg-white/10 backdrop-blur-md border border-white/20 px-10 py-4 font-semibold text-white transition hover:bg-white/20">Discover More</a>
             </div>
           </div>
         </div>
-        <div className="flex justify-center gap-2 pb-6">
+
+        {/* Controls */}
+        <div className="absolute bottom-[4.5rem] right-4 md:right-8 z-10 flex gap-3">
+          <button aria-label="Previous" onClick={() => setSlide((slide + slides.length - 1) % slides.length)} className="pill bg-white/20 backdrop-blur-md p-3 text-white border border-white/20 transition hover:bg-white/40"><ChevronLeft className="h-5 w-5" /></button>
+          <button aria-label="Next" onClick={() => setSlide((slide + 1) % slides.length)} className="pill bg-white/20 backdrop-blur-md p-3 text-white border border-white/20 transition hover:bg-white/40"><ChevronRight className="h-5 w-5" /></button>
+        </div>
+        
+        <div className="absolute bottom-[5.5rem] left-4 md:left-8 z-10 flex gap-2">
           {slides.map((_, i) => (
-            <button key={i} aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)} className={`pill h-2 transition-all ${i === slide ? "w-8 bg-foreground" : "w-2 bg-foreground/30"}`} />
+            <button key={i} aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)} className={`pill h-1.5 transition-all ${i === slide ? "w-8 bg-white" : "w-3 bg-white/40"}`} />
           ))}
         </div>
-        <Wave fill="text-background" />
+        
+        <div className="absolute bottom-0 left-0 w-full z-10 translate-y-1">
+          <Wave fill="text-background" />
+        </div>
       </section>
 
       {/* 2. Best Sellers */}
@@ -248,19 +304,21 @@ function Index() {
       </section>
 
       {/* 3. 4-Grid Categories */}
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <div className="grid grid-cols-2 gap-4 md:gap-6 max-w-5xl mx-auto">
+      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8 overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 md:gap-6 max-w-5xl mx-auto p-4 -m-4 items-start">
           {[
             { t: "EDP", img: hero, bg: "bg-pastel" },
             { t: "Attars", img: melon, bg: "bg-melon" },
             { t: "Gifting", img: peach, bg: "bg-peach-gradient" },
             { t: "Minis", img: vanilla, bg: "bg-cream" },
-          ].map((c) => (
-            <a key={c.t} href="#shop" className={`${c.bg} group overflow-hidden rounded-[2rem] relative aspect-square flex items-end p-6 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ring-2 ring-transparent hover:ring-foreground/10`}>
-              <img src={c.img} alt={c.t} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <h3 className="text-3xl text-white relative z-10 font-serif italic drop-shadow-md group-hover:translate-x-1 transition-transform duration-500">{c.t}</h3>
-            </a>
+          ].map((c, idx) => (
+            <ScrollReveal key={c.t} index={idx}>
+              <a href="#shop" className={`${c.bg} group overflow-hidden rounded-[2rem] relative aspect-square flex items-end p-6 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ring-2 ring-transparent hover:ring-foreground/10 w-full h-full block`}>
+                <img src={c.img} alt={c.t} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <h3 className="text-3xl text-white relative z-10 font-serif italic drop-shadow-md group-hover:translate-x-1 transition-transform duration-500">{c.t}</h3>
+              </a>
+            </ScrollReveal>
           ))}
         </div>
       </section>
@@ -279,8 +337,18 @@ function Index() {
       </section>
 
       {/* 5. Shop by Scent (Stacked Cards Animation) */}
-      <section className="bg-background py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8 relative">
+      <section className="py-16 relative">
+        <div className="absolute inset-0 z-0">
+          <div className="sticky top-0 h-screen w-full">
+            {["from-kiwi/60", "from-melon/60", "from-peach/60", "from-cream/80"].map((grad, i) => (
+              <div 
+                key={i} 
+                className={`absolute inset-0 bg-gradient-to-b ${grad} to-background transition-opacity duration-1000 ${activeScent === i ? 'opacity-100' : 'opacity-0'}`} 
+              />
+            ))}
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-4 md:px-8 relative z-10">
           <h2 className="text-center text-4xl md:text-5xl mb-12">Shop by <em>scent</em></h2>
           <div className="relative flex flex-col items-center w-full">
             {[
@@ -291,7 +359,7 @@ function Index() {
             ].map((s, idx, arr) => (
               <div 
                 key={s.n} 
-                className={`sticky w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[450px] border border-foreground/5 ${idx === arr.length - 1 ? 'mb-0' : 'mb-[15vh]'}`}
+                className={`scent-card sticky w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[450px] border border-foreground/5 ${idx === arr.length - 1 ? 'mb-0' : 'mb-[15vh]'}`}
                 style={{ 
                   zIndex: 10 + idx, 
                   top: `calc(120px + ${idx * 40}px)` 
