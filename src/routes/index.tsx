@@ -19,6 +19,7 @@ import vProd1 from "@/assets/vdos/v_prod1.mp4";
 import vProd2 from "@/assets/vdos/v_prod2.mp4";
 import vProd3 from "@/assets/vdos/v_prod3.mp4";
 import vProd4 from "@/assets/vdos/v_prod4.mp4";
+import logo from "@/assets/logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -180,7 +181,9 @@ function Index() {
             <button aria-label="Menu" onClick={() => setMenuOpen(true)} className="lg:hidden"><Menu className="h-6 w-6" /></button>
             <Search className="hidden h-5 w-5 sm:block text-muted-foreground" strokeWidth={1.5} />
           </div>
-          <a href="#" className="font-serif text-3xl font-semibold italic tracking-tight text-center">Juicé</a>
+          <a href="#" className="flex justify-center items-center">
+            <img src={logo} alt="One of None Logo" className="h-4 md:h-5 object-contain" />
+          </a>
           <div className="flex items-center justify-end gap-4">
             <User className="hidden h-5 w-5 sm:block" strokeWidth={1.5} />
             <button aria-label="Wishlist" className="relative">
@@ -214,7 +217,7 @@ function Index() {
         <div className="fixed inset-0 z-50 bg-foreground/40" onClick={() => setMenuOpen(false)}>
           <div className="h-full w-80 max-w-[85%] bg-cream p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-8 flex items-center justify-between">
-              <span className="font-serif text-2xl italic">Juicé</span>
+              <img src={logo} alt="One of None Logo" className="h-4 object-contain" />
               <button onClick={() => setMenuOpen(false)} aria-label="Close"><X /></button>
             </div>
             {nav.map((n) => (
