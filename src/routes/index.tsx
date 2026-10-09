@@ -99,7 +99,8 @@ function Index() {
   const bestSellers = products.filter(p => p.badge === "best" || p.badge === "sale").slice(0, 4);
   
   const naList = products.filter(p => p.badge === "new" || p.id > 4);
-  const newArrivals = [...naList, ...naList.map(p => ({...p, id: p.id + 100}))];
+  // Triple the array to completely eliminate any looping gaps on large screens
+  const newArrivals = [...naList, ...naList.map(p => ({...p, id: p.id + 100})), ...naList.map(p => ({...p, id: p.id + 200}))];
 
   const nav = [
     { label: "EDP Fragrances", items: ["Fruity Florals", "Citrus", "Sweet Gourmands", "Minis"] },
@@ -216,26 +217,26 @@ function Index() {
 
       {/* 2b. New Arrivals */}
       <section id="new-arrivals" className="bg-background pt-4 pb-10">
-        <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 border-t border-foreground/10 pt-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-8 border-t border-foreground/10 pt-16">
           <h2 className="text-4xl md:text-5xl text-center">New <em>Arrivals</em></h2>
-          <div className="mt-10 relative px-4 md:px-0">
-            <Carousel 
-              opts={{ align: "start", loop: true, dragFree: true }} 
-              plugins={[AutoScroll({ playOnInit: true, stopOnMouseEnter: true, stopOnInteraction: false, speed: 1.5 })] as any}
-              className="w-full cursor-grab active:cursor-grabbing"
-            >
-              <CarouselContent className="-ml-4 md:-ml-6 py-4">
-                {newArrivals.map((p) => (
-                  <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                    <Card p={p} add={add} wish={wish} setWish={setWish} pop />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-          </div>
-          <div className="mt-8 flex justify-center">
-             <a href="#shop" className="border-b-2 border-foreground pb-1 font-medium hover:text-hot hover:border-hot transition-colors">VIEW ALL NEW ARRIVALS</a>
-          </div>
+        </div>
+        <div className="mt-10 relative w-full overflow-hidden">
+          <Carousel 
+            opts={{ align: "start", loop: true, dragFree: true }} 
+            plugins={[AutoScroll({ playOnInit: true, stopOnMouseEnter: true, stopOnInteraction: false, speed: 1.5 })] as any}
+            className="w-full cursor-grab active:cursor-grabbing"
+          >
+            <CarouselContent className="py-4">
+              {newArrivals.map((p) => (
+                <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[85%] sm:basis-[45%] md:basis-[30%] lg:basis-[22%]">
+                  <Card p={p} add={add} wish={wish} setWish={setWish} pop />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        </div>
+        <div className="mx-auto max-w-7xl px-4 md:px-8 mt-12 flex justify-center">
+           <a href="#shop" className="border-b-2 border-foreground pb-1 font-medium hover:text-hot hover:border-hot transition-colors">VIEW ALL NEW ARRIVALS</a>
         </div>
       </section>
 
