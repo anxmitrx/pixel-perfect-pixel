@@ -4,6 +4,11 @@ import {
   Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, Star, Truck, ShieldCheck,
   Sparkles, RotateCcw, Instagram, Facebook, Youtube, Minus, Plus, ChevronLeft, ChevronRight,
 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import hero from "@/assets/hero-kiwi.jpg";
 import melon from "@/assets/p-watermelon.jpg";
 import peach from "@/assets/p-peach.jpg";
@@ -71,7 +76,6 @@ function Index() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [slide, setSlide] = useState(0);
-  const [tab, setTab] = useState<"best" | "new">("best");
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -91,12 +95,17 @@ function Index() {
   const subtotal = Object.entries(cart).reduce((s, [id, q]) => s + products.find((p) => p.id === +id)!.price * q, 0);
   const freeLeft = Math.max(0, 999 - subtotal);
 
-  const tabbed = products.filter((p) => (tab === "best" ? p.badge === "best" || p.badge === "sale" : p.badge === "new" || p.id > 4)).slice(0, 4);
+  const bsList = products.filter(p => p.badge === "best" || p.badge === "sale");
+  const bestSellers = [...bsList, ...bsList.map(p => ({...p, id: p.id + 100}))];
+  
+  const naList = products.filter(p => p.badge === "new" || p.id > 4);
+  const newArrivals = [...naList, ...naList.map(p => ({...p, id: p.id + 100}))];
 
   const nav = [
     { label: "EDP Fragrances", items: ["Fruity Florals", "Citrus", "Sweet Gourmands", "Minis"] },
     { label: "Attar", items: ["Floral Attars", "Oud Attars", "Roll-ons"] },
     { label: "Gifting", items: ["Gift Sets", "Discovery Kits", "Under ₹999"] },
+    { label: "Offers", items: ["Clearance", "Bundles"] },
   ];
 
   const s = slides[slide]!;
@@ -109,24 +118,14 @@ function Index() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-cream/90 backdrop-blur">
+      <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur">
         <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 py-4 md:px-8">
           <div className="flex items-center gap-6">
             <button aria-label="Menu" onClick={() => setMenuOpen(true)} className="lg:hidden"><Menu className="h-6 w-6" /></button>
-            <nav className="hidden gap-6 text-sm font-medium lg:flex">
-              {nav.map((n) => (
-                <div key={n.label} className="group relative">
-                  <a href="#shop" className="flex items-center gap-1 py-2 hover:text-hot">{n.label}<ChevronDown className="h-3.5 w-3.5" /></a>
-                  <div className="invisible absolute left-0 top-full w-52 rounded-2xl border bg-card p-3 opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100">
-                    {n.items.map((i) => <a key={i} href="#shop" className="block rounded-xl px-3 py-2 hover:bg-muted">{i}</a>)}
-                  </div>
-                </div>
-              ))}
-            </nav>
+            <Search className="hidden h-5 w-5 sm:block text-muted-foreground" strokeWidth={1.5} />
           </div>
-          <a href="#" className="font-serif text-3xl font-semibold italic tracking-tight">Juicé</a>
+          <a href="#" className="font-serif text-3xl font-semibold italic tracking-tight text-center">Juicé</a>
           <div className="flex items-center justify-end gap-4">
-            <Search className="hidden h-5 w-5 sm:block" strokeWidth={1.5} />
             <User className="hidden h-5 w-5 sm:block" strokeWidth={1.5} />
             <button aria-label="Wishlist" className="relative">
               <Heart className="h-5 w-5" strokeWidth={1.5} />
@@ -137,6 +136,20 @@ function Index() {
               {count > 0 && <span className="pill absolute -right-2 -top-2 bg-primary px-1.5 text-[10px] font-bold">{count}</span>}
             </button>
           </div>
+        </div>
+        
+        {/* Main Navigation (Moved out of header to match Ajmal's layout) */}
+        <div className="hidden border-y border-foreground/10 lg:block">
+          <nav className="mx-auto flex max-w-7xl justify-center gap-10 px-8">
+            {nav.map((n) => (
+              <div key={n.label} className="group relative">
+                <a href="#shop" className="flex items-center gap-1 py-3 text-sm font-medium hover:text-hot tracking-wide">{n.label}<ChevronDown className="h-3.5 w-3.5 opacity-50" /></a>
+                <div className="invisible absolute left-1/2 top-full -translate-x-1/2 w-52 rounded-2xl border bg-card p-3 opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 z-50">
+                  {n.items.map((i) => <a key={i} href="#shop" className="block rounded-xl px-3 py-2 text-sm hover:bg-muted">{i}</a>)}
+                </div>
+              </div>
+            ))}
+          </nav>
         </div>
       </header>
 
@@ -158,7 +171,7 @@ function Index() {
         </div>
       )}
 
-      {/* Hero carousel */}
+      {/* 1. Hero carousel */}
       <section className={`${s.bg} relative transition-colors duration-700`}>
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 md:grid-cols-2 md:px-8 md:py-20">
           <div key={slide} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -186,110 +199,160 @@ function Index() {
         <Wave fill="text-background" />
       </section>
 
-      {/* Categories */}
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <h2 className="text-center text-4xl md:text-5xl">Shop by <em>vibe</em></h2>
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
-          {["Women", "Men", "Unisex", "Fruity Florals", "Citrus", "Gourmand", "Attars", "Body Mists"].map((c) => (
-            <a key={c} href="#shop" className="pill bg-pastel px-6 py-3 text-sm font-medium transition hover:-translate-y-0.5 hover:bg-kiwi">{c}</a>
-          ))}
+      {/* 2. Best Sellers */}
+      <section id="best-sellers" className="bg-background pt-10">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
+          <h2 className="text-4xl md:text-5xl text-center">The <em>Bestsellers</em></h2>
+          <div className="mt-10 relative px-4 md:px-0">
+            <Carousel opts={{ align: "start", loop: true, dragFree: true }} className="w-full cursor-grab active:cursor-grabbing">
+              <CarouselContent className="-ml-4 md:-ml-6 py-4">
+                {bestSellers.map((p) => (
+                  <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <Card p={p} add={add} wish={wish} setWish={setWish} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </div>
+          <div className="mt-8 flex justify-center">
+             <a href="#shop" className="border-b-2 border-foreground pb-1 font-medium hover:text-hot hover:border-hot transition-colors">VIEW ALL BESTSELLERS</a>
+          </div>
         </div>
-        <div id="lines" className="mt-12 grid gap-6 md:grid-cols-3">
+      </section>
+
+      {/* 2b. New Arrivals */}
+      <section id="new-arrivals" className="bg-background pt-4 pb-10">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 border-t border-foreground/10 pt-16">
+          <h2 className="text-4xl md:text-5xl text-center">New <em>Arrivals</em></h2>
+          <div className="mt-10 relative px-4 md:px-0">
+            <Carousel opts={{ align: "start", loop: true, dragFree: true }} className="w-full cursor-grab active:cursor-grabbing">
+              <CarouselContent className="-ml-4 md:-ml-6 py-4">
+                {newArrivals.map((p) => (
+                  <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <Card p={p} add={add} wish={wish} setWish={setWish} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </div>
+          <div className="mt-8 flex justify-center">
+             <a href="#shop" className="border-b-2 border-foreground pb-1 font-medium hover:text-hot hover:border-hot transition-colors">VIEW ALL NEW ARRIVALS</a>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. 4-Grid Categories */}
+      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+        <div className="grid grid-cols-2 gap-4 md:gap-6 max-w-5xl mx-auto">
           {[
-            { t: "Citrus Squeeze", d: "Zesty, green, wake-up energy", img: hero, bg: "bg-pastel" },
-            { t: "Berry Sorbet", d: "Juicy pinks & soft musk", img: melon, bg: "bg-melon" },
-            { t: "Peach Nectar", d: "Warm, golden fruity florals", img: peach, bg: "bg-peach-gradient" },
+            { t: "EDP", img: hero, bg: "bg-pastel" },
+            { t: "Attars", img: melon, bg: "bg-melon" },
+            { t: "Gifting", img: peach, bg: "bg-peach-gradient" },
+            { t: "Minis", img: vanilla, bg: "bg-cream" },
           ].map((c) => (
-            <a key={c.t} href="#shop" className={`${c.bg} group overflow-hidden rounded-[2rem] p-4`}>
-              <div className="overflow-hidden rounded-[1.5rem]">
-                <img src={c.img} alt={c.t} loading="lazy" width={1024} height={1024} className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" />
-              </div>
-              <div className="px-2 pb-2 pt-5">
-                <h3 className="text-2xl">{c.t}</h3>
-                <p className="text-sm text-foreground/70">{c.d}</p>
-              </div>
+            <a key={c.t} href="#shop" className={`${c.bg} group overflow-hidden rounded-[2rem] relative aspect-square flex items-end p-6 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ring-2 ring-transparent hover:ring-foreground/10`}>
+              <img src={c.img} alt={c.t} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <h3 className="text-3xl text-white relative z-10 font-serif italic drop-shadow-md group-hover:translate-x-1 transition-transform duration-500">{c.t}</h3>
             </a>
           ))}
         </div>
       </section>
 
-      {/* Tabbed products */}
-      <Wave fill="text-melon" flip />
-      <section id="shop" className="bg-melon">
-        <div className="mx-auto max-w-7xl px-4 py-14 md:px-8">
-          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <h2 className="text-4xl md:text-5xl">The <em>Bestsellers</em></h2>
-            <div className="pill flex bg-card p-1">
-              {(["best", "new"] as const).map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`pill px-5 py-2 text-sm font-medium transition ${tab === t ? "bg-primary" : ""}`}>
-                  {t === "best" ? "Best Sellers" : "New Arrivals"}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="mt-10 grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
-            {tabbed.map((p) => <Card key={p.id} p={p} add={add} wish={wish} setWish={setWish} />)}
-          </div>
-        </div>
-      </section>
-      <Wave fill="text-melon" />
-
-      {/* Promo banner */}
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      {/* 4. Promo banner */}
+      <section className="mx-auto max-w-7xl px-4 py-8 md:px-8">
         <div className="bg-peach-gradient grid items-center gap-8 overflow-hidden rounded-[2.5rem] md:grid-cols-2">
           <div className="p-10 md:p-14">
             <span className="pill bg-sale px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-destructive-foreground">Limited · 25% off</span>
             <h2 className="mt-5 text-4xl leading-tight md:text-5xl">The Peach Nectar collection is <em>ripe</em>.</h2>
             <p className="mt-4 text-foreground/75">Sun-warmed peach, apricot and a hint of neroli. Bottled sunshine for every day.</p>
-            <a href="#shop" className="pill mt-8 inline-block bg-foreground px-8 py-3.5 font-medium text-background">Shop the line</a>
+            <a href="#shop" className="pill mt-8 inline-block bg-foreground px-8 py-3.5 font-medium text-background hover:scale-105 transition-transform">Shop the line</a>
           </div>
-          <img src={peach} alt="Peach Please perfume" loading="lazy" width={1024} height={1024} className="h-full max-h-[480px] w-full object-cover" />
+          <img src={peach} alt="Peach Please perfume" loading="lazy" className="h-full max-h-[480px] w-full object-cover" />
         </div>
       </section>
 
-      {/* All products */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 md:px-8">
-        <h2 className="text-center text-4xl md:text-5xl">All <em>fragrances</em></h2>
-        <div className="mt-10 grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
-          {products.map((p) => <Card key={p.id} p={p} add={add} wish={wish} setWish={setWish} />)}
+      {/* 5. Shop by Scent (Stacked Cards Animation) */}
+      <section className="bg-background py-24">
+        <div className="mx-auto max-w-7xl px-4 md:px-8 relative">
+          <h2 className="text-center text-4xl md:text-5xl mb-16">Shop by <em>scent</em></h2>
+          <div className="relative flex flex-col items-center w-full pb-[10vh]">
+            {[
+              { n: "Citrus", notes: "Zesty, green, wake-up energy. Features bright notes of Bergamot, Lime, and Mandarin to instantly refresh your senses.", i: hero, bg: "bg-kiwi" },
+              { n: "Sweet", notes: "Juicy, playful & a little extra. A delicious blend of Watermelon, Strawberry, and soft Musk for an addictive trail.", i: melon, bg: "bg-melon" },
+              { n: "Floral", notes: "Warm, golden, blooming fields. Elegant notes of Jasmine, Rose, and Neroli that evoke a sunny afternoon walk.", i: peach, bg: "bg-peach-gradient" },
+              { n: "Gourmand", notes: "Rich, edible, cozy comfort. Decadent layers of Caramel, Cocoa, and Tonka Bean that smell good enough to eat.", i: vanilla, bg: "bg-cream" }
+            ].map((s, idx) => (
+              <div 
+                key={s.n} 
+                className="sticky w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[450px] mb-[15vh] border border-foreground/5"
+                style={{ 
+                  zIndex: 10 + idx, 
+                  top: `calc(120px + ${idx * 40}px)` 
+                }}
+              >
+                 <div className={`${s.bg} w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-center`}>
+                    <h3 className="text-4xl md:text-5xl font-serif italic mb-6">{s.n}</h3>
+                    <p className="text-lg text-foreground/80 leading-relaxed mb-8">{s.notes}</p>
+                    <a href="#shop" className="pill w-fit bg-foreground px-8 py-3.5 font-medium text-background transition hover:scale-105">
+                      Explore {s.n}
+                    </a>
+                 </div>
+                 <div className={`${s.bg} w-full md:w-1/2 h-[300px] md:h-full relative`}>
+                    <img src={s.i} alt={s.n} className="w-full h-full object-cover mix-blend-multiply opacity-90" />
+                 </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* UGC */}
-      <Wave fill="text-kiwi" flip />
-      <section className="bg-kiwi">
-        <div className="mx-auto max-w-7xl px-4 py-14 md:px-8">
+      {/* 6. Editor's Picks */}
+      <Wave fill="text-pastel" flip />
+      <section className="bg-pastel pb-16 pt-10">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <h2 className="text-center text-4xl md:text-5xl mb-10">Our Editor's <em>Picks</em></h2>
+          <div className="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
+            {products.slice(0, 4).reverse().map((p) => <Card key={p.id} p={{...p, id: p.id+10}} add={add} wish={wish} setWish={setWish} />)}
+          </div>
+        </div>
+      </section>
+      <Wave fill="text-pastel" />
+
+      {/* 7. UGC / Heritage */}
+      <section className="bg-background pt-8 pb-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="text-center text-4xl md:text-5xl">#SmellJuicé</h2>
-          <p className="mt-3 text-center text-foreground/75">Real people, real spritzes. Tag us to be featured.</p>
-          <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <p className="mt-3 text-center text-foreground/75 mb-10">Real people, real spritzes. Tag us to be featured.</p>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[hero, melon, peach, vanilla].map((img, i) => (
-              <div key={i} className="relative overflow-hidden rounded-[1.75rem]">
-                <img src={img} alt="Customer post" loading="lazy" width={1024} height={1024} className="aspect-[3/4] w-full object-cover" />
+              <div key={i} className="relative overflow-hidden rounded-[1.75rem] group">
+                <img src={img} alt="Customer post" loading="lazy" className="aspect-[3/4] w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
                 <span className="pill absolute bottom-3 left-3 bg-card/90 px-3 py-1 text-xs font-medium">@{["aanya.vibes", "rohan.daily", "mira_glows", "kabirspritz"][i]}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
-      <Wave fill="text-kiwi" />
 
-      {/* USPs */}
-      <section className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-16 md:grid-cols-4 md:px-8">
+      {/* 8. USPs */}
+      <section className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-12 md:grid-cols-4 md:px-8 border-t border-foreground/10">
         {[
           { i: Truck, t: "Free shipping", d: "On orders above ₹999" },
           { i: ShieldCheck, t: "100% authentic", d: "Made in our own labs" },
           { i: Sparkles, t: "Long-lasting", d: "8–10 hrs of juicy wear" },
           { i: RotateCcw, t: "Easy returns", d: "7-day hassle-free" },
         ].map(({ i: I, t, d }) => (
-          <div key={t} className="rounded-[2rem] bg-muted p-6 text-center">
-            <div className="pill mx-auto grid h-14 w-14 place-items-center bg-pastel"><I className="h-6 w-6" strokeWidth={1.5} /></div>
-            <h3 className="mt-4 text-xl">{t}</h3>
-            <p className="text-sm text-muted-foreground">{d}</p>
+          <div key={t} className="p-4 text-center">
+            <div className="pill mx-auto grid h-14 w-14 place-items-center bg-pastel mb-4"><I className="h-6 w-6" strokeWidth={1.5} /></div>
+            <h3 className="text-lg font-medium">{t}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{d}</p>
           </div>
         ))}
       </section>
 
-      {/* Footer */}
+      {/* 9. Footer */}
       <Wave fill="text-foreground" flip />
       <footer className="bg-foreground text-background">
         <div className="mx-auto max-w-7xl px-4 py-14 md:px-8">
@@ -313,14 +376,14 @@ function Index() {
             ].map((c) => (
               <div key={c.h}>
                 <h4 className="font-sans text-sm font-semibold uppercase tracking-widest">{c.h}</h4>
-                <ul className="mt-4 space-y-2 text-sm text-background/70">{c.l.map((x) => <li key={x}><a href="#" className="hover:text-kiwi">{x}</a></li>)}</ul>
+                <ul className="mt-4 space-y-2 text-sm text-background/70">{c.l.map((x) => <li key={x}><a href="#" className="hover:text-kiwi transition-colors">{x}</a></li>)}</ul>
               </div>
             ))}
           </div>
-          <div className="mt-12 flex flex-col items-center justify-between gap-4 text-xs text-background/60 md:flex-row">
+          <div className="mt-12 flex flex-col items-center justify-between gap-4 text-xs text-background/60 md:flex-row border-t border-background/10 pt-8">
             <span>© 2026 Juicé Fragrances. All rights reserved.</span>
             <div className="flex gap-2">{["UPI", "Visa", "Mastercard", "RuPay", "COD"].map((p) => <span key={p} className="pill border border-background/20 px-3 py-1">{p}</span>)}</div>
-            <div className="flex gap-4"><Instagram className="h-5 w-5" /><Facebook className="h-5 w-5" /><Youtube className="h-5 w-5" /></div>
+            <div className="flex gap-4"><Instagram className="h-5 w-5 hover:text-white transition-colors" /><Facebook className="h-5 w-5 hover:text-white transition-colors" /><Youtube className="h-5 w-5 hover:text-white transition-colors" /></div>
           </div>
         </div>
       </footer>
@@ -359,7 +422,7 @@ function Index() {
             </div>
             <div className="border-t p-6">
               <div className="flex justify-between text-lg"><span>Subtotal</span><b>{inr(subtotal)}</b></div>
-              <button disabled={!count} className="pill mt-4 w-full bg-foreground py-4 font-medium text-background disabled:opacity-40">Checkout</button>
+              <button disabled={!count} className="pill mt-4 w-full bg-foreground py-4 font-medium text-background disabled:opacity-40 transition-opacity">Checkout</button>
             </div>
           </aside>
         </div>
@@ -375,7 +438,7 @@ function Card({ p, add, wish, setWish }: { p: Product; add: (id: number) => void
       <div className={`${p.bg} relative overflow-hidden rounded-[1.5rem]`}>
         <img src={p.img} alt={p.name} loading="lazy" width={1024} height={1024} className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" />
         <div className="absolute left-3 top-3">{p.badge && <Badge kind={p.badge} />}</div>
-        <button aria-label="Wishlist" onClick={() => setWish((w) => (liked ? w.filter((x) => x !== p.id) : [...w, p.id]))} className="pill absolute right-3 top-3 bg-card/90 p-2">
+        <button aria-label="Wishlist" onClick={() => setWish((w) => (liked ? w.filter((x) => x !== p.id) : [...w, p.id]))} className="pill absolute right-3 top-3 bg-card/90 p-2 transition-transform hover:scale-110">
           <Heart className={`h-4 w-4 ${liked ? "fill-hot text-hot" : ""}`} />
         </button>
       </div>
@@ -395,3 +458,5 @@ function Card({ p, add, wish, setWish }: { p: Product; add: (id: number) => void
     </div>
   );
 }
+
+export default Index;
