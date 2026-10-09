@@ -9,6 +9,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import AutoScroll from "embla-carousel-auto-scroll";
 import hero from "@/assets/hero-kiwi.jpg";
 import melon from "@/assets/p-watermelon.jpg";
 import peach from "@/assets/p-peach.jpg";
@@ -95,8 +96,7 @@ function Index() {
   const subtotal = Object.entries(cart).reduce((s, [id, q]) => s + products.find((p) => p.id === +id)!.price * q, 0);
   const freeLeft = Math.max(0, 999 - subtotal);
 
-  const bsList = products.filter(p => p.badge === "best" || p.badge === "sale");
-  const bestSellers = [...bsList, ...bsList.map(p => ({...p, id: p.id + 100}))];
+  const bestSellers = products.filter(p => p.badge === "best" || p.badge === "sale").slice(0, 4);
   
   const naList = products.filter(p => p.badge === "new" || p.id > 4);
   const newArrivals = [...naList, ...naList.map(p => ({...p, id: p.id + 100}))];
@@ -203,18 +203,12 @@ function Index() {
       <section id="best-sellers" className="bg-background pt-10">
         <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
           <h2 className="text-4xl md:text-5xl text-center">The <em>Bestsellers</em></h2>
-          <div className="mt-10 relative px-4 md:px-0">
-            <Carousel opts={{ align: "start", loop: true, dragFree: true }} className="w-full cursor-grab active:cursor-grabbing">
-              <CarouselContent className="-ml-4 md:-ml-6 py-4">
-                {bestSellers.map((p) => (
-                  <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                    <Card p={p} add={add} wish={wish} setWish={setWish} />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-2 md:px-0">
+            {bestSellers.map((p) => (
+              <Card key={p.id} p={p} add={add} wish={wish} setWish={setWish} pop />
+            ))}
           </div>
-          <div className="mt-8 flex justify-center">
+          <div className="mt-12 flex justify-center">
              <a href="#shop" className="border-b-2 border-foreground pb-1 font-medium hover:text-hot hover:border-hot transition-colors">VIEW ALL BESTSELLERS</a>
           </div>
         </div>
@@ -225,11 +219,15 @@ function Index() {
         <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 border-t border-foreground/10 pt-16">
           <h2 className="text-4xl md:text-5xl text-center">New <em>Arrivals</em></h2>
           <div className="mt-10 relative px-4 md:px-0">
-            <Carousel opts={{ align: "start", loop: true, dragFree: true }} className="w-full cursor-grab active:cursor-grabbing">
+            <Carousel 
+              opts={{ align: "start", loop: true, dragFree: true }} 
+              plugins={[AutoScroll({ playOnInit: true, stopOnMouseEnter: true, stopOnInteraction: false, speed: 1.5 })] as any}
+              className="w-full cursor-grab active:cursor-grabbing"
+            >
               <CarouselContent className="-ml-4 md:-ml-6 py-4">
                 {newArrivals.map((p) => (
                   <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                    <Card p={p} add={add} wish={wish} setWish={setWish} />
+                    <Card p={p} add={add} wish={wish} setWish={setWish} pop />
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -273,19 +271,19 @@ function Index() {
       </section>
 
       {/* 5. Shop by Scent (Stacked Cards Animation) */}
-      <section className="bg-background py-24">
+      <section className="bg-background py-16">
         <div className="mx-auto max-w-7xl px-4 md:px-8 relative">
-          <h2 className="text-center text-4xl md:text-5xl mb-16">Shop by <em>scent</em></h2>
-          <div className="relative flex flex-col items-center w-full pb-[10vh]">
+          <h2 className="text-center text-4xl md:text-5xl mb-12">Shop by <em>scent</em></h2>
+          <div className="relative flex flex-col items-center w-full">
             {[
               { n: "Citrus", notes: "Zesty, green, wake-up energy. Features bright notes of Bergamot, Lime, and Mandarin to instantly refresh your senses.", i: hero, bg: "bg-kiwi" },
               { n: "Sweet", notes: "Juicy, playful & a little extra. A delicious blend of Watermelon, Strawberry, and soft Musk for an addictive trail.", i: melon, bg: "bg-melon" },
               { n: "Floral", notes: "Warm, golden, blooming fields. Elegant notes of Jasmine, Rose, and Neroli that evoke a sunny afternoon walk.", i: peach, bg: "bg-peach-gradient" },
               { n: "Gourmand", notes: "Rich, edible, cozy comfort. Decadent layers of Caramel, Cocoa, and Tonka Bean that smell good enough to eat.", i: vanilla, bg: "bg-cream" }
-            ].map((s, idx) => (
+            ].map((s, idx, arr) => (
               <div 
                 key={s.n} 
-                className="sticky w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[450px] mb-[15vh] border border-foreground/5"
+                className={`sticky w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[450px] border border-foreground/5 ${idx === arr.length - 1 ? 'mb-0' : 'mb-[15vh]'}`}
                 style={{ 
                   zIndex: 10 + idx, 
                   top: `calc(120px + ${idx * 40}px)` 
@@ -431,10 +429,10 @@ function Index() {
   );
 }
 
-function Card({ p, add, wish, setWish }: { p: Product; add: (id: number) => void; wish: number[]; setWish: (f: (w: number[]) => number[]) => void }) {
+function Card({ p, add, wish, setWish, pop }: { p: Product; add: (id: number) => void; wish: number[]; setWish: (f: (w: number[]) => number[]) => void; pop?: boolean }) {
   const liked = wish.includes(p.id);
   return (
-    <div className="group flex flex-col rounded-[2rem] bg-card p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+    <div className={`group flex flex-col rounded-[2rem] bg-card p-3 shadow-sm transition-all duration-300 ${pop ? "hover:-translate-y-3 hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-foreground/5 z-10 hover:z-20 relative bg-background" : "hover:-translate-y-1 hover:shadow-xl"}`}>
       <div className={`${p.bg} relative overflow-hidden rounded-[1.5rem]`}>
         <img src={p.img} alt={p.name} loading="lazy" width={1024} height={1024} className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" />
         <div className="absolute left-3 top-3">{p.badge && <Badge kind={p.badge} />}</div>
