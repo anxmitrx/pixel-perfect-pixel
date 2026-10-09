@@ -99,7 +99,7 @@ function Index() {
     { label: "Gifting", items: ["Gift Sets", "Discovery Kits", "Under ₹999"] },
   ];
 
-  const s = slides[slide];
+  const s = slides[slide]!;
 
   return (
     <div className="min-h-screen">
