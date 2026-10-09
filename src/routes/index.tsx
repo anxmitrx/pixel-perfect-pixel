@@ -14,6 +14,11 @@ import hero from "@/assets/hero-kiwi.jpg";
 import melon from "@/assets/p-watermelon.jpg";
 import peach from "@/assets/p-peach.jpg";
 import vanilla from "@/assets/p-vanilla.jpg";
+import vMain from "@/assets/vdos/v_main.mp4";
+import vProd1 from "@/assets/vdos/v_prod1.mp4";
+import vProd2 from "@/assets/vdos/v_prod2.mp4";
+import vProd3 from "@/assets/vdos/v_prod3.mp4";
+import vProd4 from "@/assets/vdos/v_prod4.mp4";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,9 +51,11 @@ const products: Product[] = [
 ];
 
 const slides = [
-  { img: hero, tag: "New Arrival", title: "Your glow-up smells like kiwi.", sub: "Meet Kiwi Crush — zesty, green and impossibly fresh.", bg: "bg-kiwi" },
-  { img: melon, tag: "Summer Sale · 30% off", title: "Juicy, sweet & a little extra.", sub: "Watermelon Berry is back for the season.", bg: "bg-melon" },
-  { img: peach, tag: "Bestseller", title: "Peach, please. Always.", sub: "Our most-loved fruity floral, now in minis.", bg: "bg-peach-gradient" },
+  { vid: vMain, tag: "New Arrival", title: "Your glow-up smells like kiwi.", sub: "Meet Kiwi Crush — zesty, green and impossibly fresh.", bg: "bg-kiwi" },
+  { vid: vProd1, tag: "Summer Sale · 30% off", title: "Juicy, sweet & a little extra.", sub: "Watermelon Berry is back for the season.", bg: "bg-melon" },
+  { vid: vProd2, tag: "Bestseller", title: "Peach, please. Always.", sub: "Our most-loved fruity floral, now in minis.", bg: "bg-peach-gradient" },
+  { vid: vProd3, tag: "Must Have", title: "Gourmand dreams.", sub: "Sweet vanilla and caramel for a cozy vibe.", bg: "bg-cream" },
+  { vid: vProd4, tag: "Exclusive", title: "Fresh Citrus Pop.", sub: "The perfect pick-me-up for any day.", bg: "bg-pastel" },
 ];
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
@@ -185,7 +192,7 @@ function Index() {
             </div>
           </div>
           <div className="relative">
-            <img key={s.img + slide} src={s.img} alt={s.title} width={1024} height={1024} className="aspect-[4/3] w-full rounded-[2.5rem] object-cover shadow-2xl animate-in fade-in zoom-in-95 duration-700" />
+            <video key={s.vid + slide} src={s.vid} autoPlay muted loop playsInline className="aspect-[4/3] w-full rounded-[2.5rem] object-cover shadow-2xl animate-in fade-in zoom-in-95 duration-700" />
             <div className="absolute bottom-4 right-4 flex gap-2">
               <button aria-label="Previous" onClick={() => setSlide((slide + slides.length - 1) % slides.length)} className="pill bg-card p-2"><ChevronLeft className="h-4 w-4" /></button>
               <button aria-label="Next" onClick={() => setSlide((slide + 1) % slides.length)} className="pill bg-card p-2"><ChevronRight className="h-4 w-4" /></button>
