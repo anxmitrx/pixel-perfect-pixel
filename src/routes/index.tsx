@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { useAdmin } from "@/lib/admin-context";
 import {
   Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, Star, Truck, ShieldCheck,
   Sparkles, RotateCcw, Instagram, Facebook, Youtube, Minus, Plus, ChevronLeft, ChevronRight,
@@ -17,6 +18,7 @@ import ShopByScent from "@/components/ShopByScent";
 import Wave from "@/components/Wave";
 import MagneticButton from "@/components/MagneticButton";
 import SmellJuiceMarquee from "@/components/SmellJuiceMarquee";
+import { UserProfileDrawer } from "@/components/UserProfileDrawer";
 import hero from "@/assets/hero-kiwi.jpg";
 import melon from "@/assets/p-watermelon.jpg";
 import peach from "@/assets/p-peach.jpg";
@@ -61,15 +63,9 @@ type Product = {
   bg: string;
 };
 
-const products: Product[] = [
+// Exactly one mock product as requested
+const DEFAULT_PRODUCTS: Product[] = [
   { id: 1, name: "Kiwi Crush", notes: "Kiwi · Lime · Green tea", img: hero, video: kiwiVid, price: 1299, rating: 4.8, reviews: 412, badge: "best", cat: "EDP", bg: "bg-pastel" },
-  { id: 2, name: "Watermelon Berry", notes: "Watermelon · Strawberry · Musk", img: melon, video: watermelonVid, price: 1099, was: 1499, rating: 4.7, reviews: 289, badge: "sale", cat: "EDP", bg: "bg-melon" },
-  { id: 3, name: "Peach Please", notes: "Peach · Apricot · Neroli", img: peach, video: peachVid, price: 1199, rating: 4.9, reviews: 530, badge: "best", cat: "EDP", bg: "bg-peach-gradient" },
-  { id: 4, name: "Ambre Caramel", notes: "Vanilla · Caramel · Cocoa", img: vanilla, video: ambreVid, price: 899, was: 1199, rating: 4.6, reviews: 174, badge: "sale", cat: "Attar", bg: "bg-cream" },
-  { id: 5, name: "Melon Mist Attar", notes: "Melon · Rose · Oud", img: melon, video: watermelonVid, price: 749, rating: 4.5, reviews: 98, badge: "new", cat: "Attar", bg: "bg-melon" },
-  { id: 6, name: "Citrus Pop Duo", notes: "Gift set · 2 × 30ml", img: hero, video: kiwiVid, price: 1999, was: 2599, rating: 4.8, reviews: 211, badge: "sale", cat: "Gifting", bg: "bg-pastel" },
-  { id: 7, name: "Peach Fizz Mini", notes: "Peach · Soda · Pear", img: peach, video: peachVid, price: 599, rating: 4.7, reviews: 143, badge: "new", cat: "EDP", bg: "bg-peach-gradient" },
-  { id: 8, name: "Gourmand Gift Box", notes: "Gift set · 3 × 10ml", img: vanilla, video: ambreVid, price: 1499, rating: 4.9, reviews: 320, badge: "best", cat: "Gifting", bg: "bg-cream" },
 ];
 
 const slides = [
@@ -123,9 +119,11 @@ function ScrollReveal({ children, index }: { children: React.ReactNode, index: n
 }
 
 function Index() {
+  const { products: adminProducts } = useAdmin();
   const [cart, setCart] = useState<Record<number, number>>({});
   const [wish, setWish] = useState<number[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [slide, setSlide] = useState(0);
   const [email, setEmail] = useState("");
@@ -136,6 +134,58 @@ function Index() {
     return () => clearInterval(t);
   }, []);
 
+  const resolveImage = (img?: string) => {
+    if (!img) return hero;
+    if (img.startsWith("data:") || img.startsWith("blob:") || img.startsWith("http://") || img.startsWith("https://")) {
+      return img;
+    }
+    if (img.includes("watermelon") || img.includes("melon")) return melon;
+    if (img.includes("peach")) return peach;
+    if (img.includes("vanilla") || img.includes("ambre")) return vanilla;
+    if (img.includes("kiwi") || img.includes("hero")) return hero;
+    return img;
+  };
+
+  const resolveVideo = (vid?: string) => {
+    if (!vid) return kiwiVid;
+    if (vid.startsWith("data:") || vid.startsWith("blob:") || vid.startsWith("http://") || vid.startsWith("https://")) {
+      return vid;
+    }
+    if (vid.includes("watermelon") || vid.includes("melon")) return watermelonVid;
+    if (vid.includes("peach")) return peachVid;
+    if (vid.includes("ambre") || vid.includes("vanilla")) return ambreVid;
+    if (vid.includes("v_main") || vid.includes("main")) return vMain;
+    if (vid.includes("v_prod1")) return vProd1;
+    if (vid.includes("v_prod2")) return vProd2;
+    if (vid.includes("v_prod3")) return vProd3;
+    if (vid.includes("v_prod4")) return vProd4;
+    if (vid.includes("kiwi")) return kiwiVid;
+    return vid;
+  };
+
+  // Live products connected directly to Admin state
+  const products: Product[] = useMemo(() => {
+    if (!adminProducts || adminProducts.length === 0) {
+      return DEFAULT_PRODUCTS;
+    }
+    return adminProducts
+      .filter((p) => p.active !== false)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        notes: p.notes,
+        img: resolveImage(p.img),
+        video: resolveVideo(p.video),
+        price: p.price,
+        was: p.wasPrice,
+        rating: p.rating || 5.0,
+        reviews: p.reviews || 0,
+        badge: (p.badge === "soldout" ? undefined : p.badge) as "sale" | "best" | "new" | undefined,
+        cat: p.cat,
+        bg: p.bg || "bg-pastel",
+      }));
+  }, [adminProducts]);
+
   const add = (id: number, d = 1) =>
     setCart((c) => {
       const q = (c[id] ?? 0) + d;
@@ -144,14 +194,41 @@ function Index() {
       return n;
     });
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
-  const subtotal = Object.entries(cart).reduce((s, [id, q]) => s + products.find((p) => p.id === +id)!.price * q, 0);
+  const subtotal = Object.entries(cart).reduce((s, [id, q]) => {
+    const item = products.find((p) => p.id === +id);
+    return s + (item ? item.price * q : 0);
+  }, 0);
   const freeLeft = Math.max(0, 999 - subtotal);
 
-  const bestSellers = products.filter(p => p.badge === "best" || p.badge === "sale").slice(0, 4);
+  const bestSellers = products.filter(p => p.badge === "best" || p.badge === "sale");
   
-  const naList = products;
-  // Triple the array to completely eliminate any looping gaps on large screens
-  const newArrivals = [...naList, ...naList.map(p => ({...p, id: p.id + 100})), ...naList.map(p => ({...p, id: p.id + 200}))];
+  // Dynamic bestseller mapping for Framer Motion 3D component
+  const bestsellerProductsMapped = useMemo(() => {
+    const pool = bestSellers.length > 0 ? bestSellers : products;
+    return pool.map((p) => ({
+      id: p.id,
+      name: p.name,
+      notes: p.notes,
+      image: p.img,
+      video: p.video,
+      price: p.price,
+      originalPrice: p.was,
+      discount: p.was ? `-${Math.round(((p.was - p.price) / p.was) * 100)}%` : undefined,
+      rating: p.rating,
+      reviews: p.reviews,
+      badge: p.badge === "best" ? ("Bestseller" as const) : p.badge === "sale" ? ("Sale" as const) : p.badge === "new" ? ("New" as const) : undefined,
+      category: (p.cat === "Attar" || p.cat === "Gifting" ? p.cat : "EDP") as "EDP" | "Attar" | "Gifting",
+      accentColor: p.bg.includes("melon")
+        ? "from-pink-100 to-rose-200"
+        : p.bg.includes("peach")
+        ? "from-amber-100 to-orange-200"
+        : p.bg.includes("cream")
+        ? "from-amber-50 to-yellow-100"
+        : "from-lime-100 to-emerald-200",
+    }));
+  }, [bestSellers, products]);
+
+  const newArrivals = products;
 
   const nav = [
     { label: "EDP Fragrances", items: ["Fruity Florals", "Citrus", "Sweet Gourmands", "Minis"] },
@@ -180,7 +257,14 @@ function Index() {
             <img src={logo} alt="One of None Logo" className="h-4 md:h-5 object-contain" />
           </a>
           <div className="flex items-center justify-end gap-4">
-            <User className="hidden h-5 w-5 sm:block" strokeWidth={1.5} />
+            <button
+              aria-label="User Profile & Account"
+              onClick={() => setProfileOpen(true)}
+              className="p-1 text-foreground hover:text-hot transition flex items-center"
+              title="My Profile & Orders"
+            >
+              <User className="h-5 w-5" strokeWidth={1.5} />
+            </button>
             <button aria-label="Wishlist" className="relative">
               <Heart className="h-5 w-5" strokeWidth={1.5} />
               {wish.length > 0 && <span className="pill absolute -right-2 -top-2 bg-hot px-1.5 text-[10px] text-destructive-foreground">{wish.length}</span>}
@@ -215,6 +299,13 @@ function Index() {
               <img src={logo} alt="One of None Logo" className="h-4 object-contain" />
               <button onClick={() => setMenuOpen(false)} aria-label="Close"><X /></button>
             </div>
+            <button
+              onClick={() => { setMenuOpen(false); setProfileOpen(true); }}
+              className="flex items-center gap-2.5 w-full py-3 mb-2 text-left font-medium border-b border-foreground/10 text-foreground hover:text-hot transition text-sm"
+            >
+              <User className="h-4 w-4" />
+              <span>My Profile & Orders</span>
+            </button>
             {nav.map((n) => (
               <details key={n.label} className="border-b py-3">
                 <summary className="cursor-pointer font-medium">{n.label}</summary>
@@ -233,6 +324,7 @@ function Index() {
 
       {/* 2. Best Sellers */}
       <BestsellersFramerMotion
+        products={bestsellerProductsMapped}
         onAddToCart={(p) => add(p.id)}
         onToggleWishlist={(id) => setWish((w) => w.includes(id) ? w.filter((x) => x !== id) : [...w, id])}
       />
@@ -244,7 +336,7 @@ function Index() {
         </div>
         <div className="mt-10 relative w-full overflow-hidden">
           <Carousel 
-            opts={{ align: "start", loop: true, dragFree: true }} 
+            opts={{ align: "start", loop: newArrivals.length > 3, dragFree: true }} 
             plugins={[AutoScroll({ playOnInit: true, stopOnMouseEnter: true, stopOnInteraction: false, speed: 1.5 })] as any}
             className="w-full cursor-grab active:cursor-grabbing"
           >
@@ -295,10 +387,10 @@ function Index() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="text-center text-4xl md:text-5xl mb-10">Our Editor's <em>Picks</em></h2>
           <div className="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
-            {products.slice(0, 4).reverse().map((p) => (
+            {products.slice(0, 4).map((p) => (
               <Card
                 key={p.id}
-                p={{ ...p, id: p.id + 10 }}
+                p={p}
                 add={add}
                 wish={wish}
                 setWish={setWish}
@@ -379,7 +471,8 @@ function Index() {
             <div className="flex-1 space-y-4 overflow-y-auto p-6">
               {count === 0 && <p className="text-center text-muted-foreground">Your bag is empty — go get juicy.</p>}
               {Object.entries(cart).map(([id, q]) => {
-                const p = products.find((x) => x.id === +id)!;
+                const p = products.find((x) => x.id === +id);
+                if (!p) return null;
                 return (
                   <div key={id} className="flex gap-4">
                     <img src={p.img} alt={p.name} className="h-20 w-20 rounded-2xl object-cover" />
@@ -404,6 +497,17 @@ function Index() {
           </aside>
         </div>
       )}
+
+      {/* User Profile drawer */}
+      <UserProfileDrawer
+        isOpen={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        onAddToCart={(name) => {
+          const match = products.find((prod) => prod.name.toLowerCase().includes(name.toLowerCase()));
+          if (match) add(match.id);
+          else add(1);
+        }}
+      />
     </div>
   );
 }

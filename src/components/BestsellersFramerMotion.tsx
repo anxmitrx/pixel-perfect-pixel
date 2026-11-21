@@ -42,49 +42,6 @@ export const BESTSELLER_PRODUCTS: Product[] = [
     category: "EDP",
     accentColor: "from-lime-100 to-emerald-200",
   },
-  {
-    id: 2,
-    name: "Watermelon Berry",
-    notes: "Watermelon · Strawberry · Musk",
-    image: melon,
-    video: watermelonVideo,
-    price: 1099,
-    originalPrice: 1499,
-    discount: "-27%",
-    rating: 4.7,
-    reviews: 289,
-    badge: "Sale",
-    category: "EDP",
-    accentColor: "from-pink-100 to-rose-200",
-  },
-  {
-    id: 3,
-    name: "Peach Please",
-    notes: "Peach · Apricot · Neroli",
-    image: peach,
-    video: peachVideo,
-    price: 1199,
-    rating: 4.9,
-    reviews: 530,
-    badge: "Bestseller",
-    category: "EDP",
-    accentColor: "from-amber-100 to-orange-200",
-  },
-  {
-    id: 4,
-    name: "Ambre Caramel",
-    notes: "Vanilla · Caramel · Cocoa",
-    image: vanilla,
-    video: ambreVideo,
-    price: 899,
-    originalPrice: 1199,
-    discount: "-25%",
-    rating: 4.6,
-    reviews: 174,
-    badge: "Sale",
-    category: "Attar",
-    accentColor: "from-amber-50 to-yellow-100",
-  },
 ];
 
 const formatINR = (n: number) => `₹${n.toLocaleString("en-IN")}`;
@@ -291,7 +248,17 @@ export default function BestsellersFramerMotion({
         </div>
 
         {/* Product Cards Grid: relative z-10 and ample padding prevents top clipping */}
-        <div className="relative z-10 mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-7">
+        <div
+          className={`relative z-10 mt-16 grid gap-6 lg:gap-7 ${
+            products.length === 1
+              ? "max-w-sm mx-auto grid-cols-1"
+              : products.length === 2
+              ? "max-w-2xl mx-auto grid-cols-1 sm:grid-cols-2"
+              : products.length === 3
+              ? "max-w-5xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+          }`}
+        >
           {products.slice(0, 4).map((product) => (
             <BestsellerCard
               key={product.id}
