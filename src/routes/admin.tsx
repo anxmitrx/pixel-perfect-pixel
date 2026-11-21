@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminProvider, useAdmin } from "@/lib/admin-context";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
@@ -27,13 +27,19 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem("juice_admin_authenticated") === "true";
-  });
+  const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState("");
   const [showPasscode, setShowPasscode] = useState(false);
   const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== "undefined") {
+      const auth = localStorage.getItem("juice_admin_authenticated") === "true";
+      setIsAuthenticated(auth);
+    }
+  }, []);
 
   const handleLogin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -60,6 +66,17 @@ function AdminPage() {
       localStorage.removeItem("juice_admin_authenticated");
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center font-sans">
+        <div className="flex items-center gap-2.5 text-xs text-muted-foreground font-medium animate-pulse">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          Loading Operations Console...
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

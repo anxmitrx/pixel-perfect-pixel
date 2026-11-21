@@ -88,113 +88,90 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [activeTab, setActiveTab] = useState("overview");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [autoStreamOrders, setAutoStreamOrders] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Initialize state with lazy localStorage hydration
-  const [products, setProducts] = useState<AdminProduct[]>(() => {
-    if (typeof window === "undefined") return INITIAL_PRODUCTS;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.products);
-      return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-    } catch {
-      return INITIAL_PRODUCTS;
-    }
-  });
+  // Initialize state with SSR-safe initial defaults
+  const [products, setProducts] = useState<AdminProduct[]>(INITIAL_PRODUCTS);
+  const [orders, setOrders] = useState<AdminOrder[]>(INITIAL_ORDERS);
+  const [customers, setCustomers] = useState<AdminCustomer[]>(INITIAL_CUSTOMERS);
+  const [coupons, setCoupons] = useState<AdminCoupon[]>(INITIAL_COUPONS);
+  const [batches, setBatches] = useState<BatchProduction[]>(INITIAL_BATCHES);
+  const [metrics, setMetrics] = useState<PressureMetrics>(INITIAL_PRESSURE_METRICS);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
 
-  const [orders, setOrders] = useState<AdminOrder[]>(() => {
-    if (typeof window === "undefined") return INITIAL_ORDERS;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.orders);
-      return saved ? JSON.parse(saved) : INITIAL_ORDERS;
-    } catch {
-      return INITIAL_ORDERS;
-    }
-  });
-
-  const [customers, setCustomers] = useState<AdminCustomer[]>(() => {
-    if (typeof window === "undefined") return INITIAL_CUSTOMERS;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.customers);
-      return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
-    } catch {
-      return INITIAL_CUSTOMERS;
-    }
-  });
-
-  const [coupons, setCoupons] = useState<AdminCoupon[]>(() => {
-    if (typeof window === "undefined") return INITIAL_COUPONS;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.coupons);
-      return saved ? JSON.parse(saved) : INITIAL_COUPONS;
-    } catch {
-      return INITIAL_COUPONS;
-    }
-  });
-
-  const [batches, setBatches] = useState<BatchProduction[]>(() => {
-    if (typeof window === "undefined") return INITIAL_BATCHES;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.batches);
-      return saved ? JSON.parse(saved) : INITIAL_BATCHES;
-    } catch {
-      return INITIAL_BATCHES;
-    }
-  });
-
-  const [metrics, setMetrics] = useState<PressureMetrics>(() => {
-    if (typeof window === "undefined") return INITIAL_PRESSURE_METRICS;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.metrics);
-      return saved ? JSON.parse(saved) : INITIAL_PRESSURE_METRICS;
-    } catch {
-      return INITIAL_PRESSURE_METRICS;
-    }
-  });
-
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
-    if (typeof window === "undefined") return INITIAL_AUDIT_LOGS;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.logs);
-      return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
-    } catch {
-      return INITIAL_AUDIT_LOGS;
-    }
-  });
-
-  // Sync state changes to localStorage
+  // Hydrate once safely on client mount
   useEffect(() => {
     if (typeof window === "undefined") return;
+    try {
+      const savedProds = localStorage.getItem(STORAGE_KEYS.products);
+      if (savedProds) {
+        const parsed = JSON.parse(savedProds);
+        if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+      }
+      const savedOrders = localStorage.getItem(STORAGE_KEYS.orders);
+      if (savedOrders) {
+        const parsed = JSON.parse(savedOrders);
+        if (Array.isArray(parsed)) setOrders(parsed);
+      }
+      const savedCustomers = localStorage.getItem(STORAGE_KEYS.customers);
+      if (savedCustomers) {
+        const parsed = JSON.parse(savedCustomers);
+        if (Array.isArray(parsed)) setCustomers(parsed);
+      }
+      const savedCoupons = localStorage.getItem(STORAGE_KEYS.coupons);
+      if (savedCoupons) {
+        const parsed = JSON.parse(savedCoupons);
+        if (Array.isArray(parsed)) setCoupons(parsed);
+      }
+      const savedBatches = localStorage.getItem(STORAGE_KEYS.batches);
+      if (savedBatches) {
+        const parsed = JSON.parse(savedBatches);
+        if (Array.isArray(parsed)) setBatches(parsed);
+      }
+      const savedLogs = localStorage.getItem(STORAGE_KEYS.logs);
+      if (savedLogs) {
+        const parsed = JSON.parse(savedLogs);
+        if (Array.isArray(parsed)) setAuditLogs(parsed);
+      }
+    } catch {}
+    setIsHydrated(true);
+  }, []);
+
+  // Sync state changes to localStorage ONLY after hydration has finished
+  useEffect(() => {
+    if (!isHydrated || typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEYS.products, JSON.stringify(products));
     } catch {}
-  }, [products]);
+  }, [products, isHydrated]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isHydrated || typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(orders));
     } catch {}
-  }, [orders]);
+  }, [orders, isHydrated]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isHydrated || typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEYS.coupons, JSON.stringify(coupons));
     } catch {}
-  }, [coupons]);
+  }, [coupons, isHydrated]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isHydrated || typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEYS.batches, JSON.stringify(batches));
     } catch {}
-  }, [batches]);
+  }, [batches, isHydrated]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isHydrated || typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(auditLogs.slice(0, 100)));
     } catch {}
-  }, [auditLogs]);
+  }, [auditLogs, isHydrated]);
 
   // Real-time synchronization across browser tabs/windows
   useEffect(() => {

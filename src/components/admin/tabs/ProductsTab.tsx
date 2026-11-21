@@ -1003,8 +1003,15 @@ export const ProductsTab: React.FC = () => {
                       muted
                       playsInline
                       className="absolute inset-0 h-full w-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl"
-                      onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
-                      onMouseLeave={(e) => (e.target as HTMLVideoElement).pause()}
+                      onMouseEnter={(e) => {
+                        const playPromise = (e.target as HTMLVideoElement).play();
+                        if (playPromise !== undefined) playPromise.catch(() => {});
+                      }}
+                      onMouseLeave={(e) => {
+                        try {
+                          (e.target as HTMLVideoElement).pause();
+                        } catch {}
+                      }}
                     />
                   )}
 

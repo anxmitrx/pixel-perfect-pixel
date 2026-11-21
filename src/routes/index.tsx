@@ -334,21 +334,27 @@ function Index() {
         <div className="mx-auto max-w-7xl px-4 md:px-8 border-t border-foreground/10 pt-16">
           <h2 className="text-4xl md:text-5xl text-center">New <em>Arrivals</em></h2>
         </div>
-        <div className="mt-10 relative w-full overflow-hidden">
-          <Carousel 
-            opts={{ align: "start", loop: newArrivals.length > 3, dragFree: true }} 
-            plugins={[AutoScroll({ playOnInit: true, stopOnMouseEnter: true, stopOnInteraction: false, speed: 1.5 })] as any}
-            className="w-full cursor-grab active:cursor-grabbing"
-          >
-            <CarouselContent className="py-4">
-              {newArrivals.map((p) => (
-                <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[85%] sm:basis-[45%] md:basis-[30%] lg:basis-[22%]">
-                  <Card p={p} add={add} wish={wish} setWish={setWish} pop videoMode="hover" />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
-        </div>
+        {newArrivals.length === 1 ? (
+          <div className="mx-auto max-w-sm px-4 py-4">
+            <Card p={newArrivals[0]!} add={add} wish={wish} setWish={setWish} pop videoMode="hover" />
+          </div>
+        ) : (
+          <div className="mt-10 relative w-full overflow-hidden">
+            <Carousel 
+              opts={{ align: "start", loop: newArrivals.length > 3, dragFree: true }} 
+              plugins={newArrivals.length > 2 ? [AutoScroll({ playOnInit: true, stopOnMouseEnter: true, stopOnInteraction: false, speed: 1.5 })] as any : []}
+              className="w-full cursor-grab active:cursor-grabbing"
+            >
+              <CarouselContent className="py-4">
+                {newArrivals.map((p) => (
+                  <CarouselItem key={p.id} className="pl-4 md:pl-6 basis-[85%] sm:basis-[45%] md:basis-[30%] lg:basis-[22%]">
+                    <Card p={p} add={add} wish={wish} setWish={setWish} pop videoMode="hover" />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </div>
+        )}
         <div className="mx-auto max-w-7xl px-4 md:px-8 mt-12 flex justify-center">
           <MagneticButton>
             <a href="#shop" className="border-b-2 border-foreground pb-1 font-medium hover:text-hot hover:border-hot transition-colors inline-block">
@@ -386,7 +392,15 @@ function Index() {
       <section className="bg-pastel pb-16 pt-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="text-center text-4xl md:text-5xl mb-10">Our Editor's <em>Picks</em></h2>
-          <div className="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
+          <div className={`grid gap-4 md:gap-6 ${
+            products.length === 1
+              ? "max-w-sm mx-auto grid-cols-1"
+              : products.length === 2
+              ? "max-w-2xl mx-auto grid-cols-2"
+              : products.length === 3
+              ? "max-w-5xl mx-auto grid-cols-2 lg:grid-cols-3"
+              : "grid-cols-2 lg:grid-cols-4"
+          }`}>
             {products.slice(0, 4).map((p) => (
               <Card
                 key={p.id}
